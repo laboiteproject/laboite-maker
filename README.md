@@ -46,8 +46,8 @@ WiFiMulti wifiMulti;
 Boite boite;
 
 // wifi network params
-char ssid[] = "RiboulonEtCiboulette";
-char pass[] = "0686226329";
+char ssid[] = "";
+char pass[] = "";
 
 // lenuage params
 char hostName[] = "lenuage.io";
