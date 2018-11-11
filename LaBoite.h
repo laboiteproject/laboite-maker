@@ -1,0 +1,96 @@
+/*
+  LaBoite.h - Library for laboite maker edition.
+  Created by Baptiste Gaultier, November 2, 2018.
+  Released under GPLv3
+*/
+#ifndef LaBoite_h
+#define LaBoite_h
+
+#include "Arduino.h"
+
+#define TILES_ARRAY_SIZE 32
+#define ITEMS_ARRAY_SIZE 16
+// uncomment if you want to debug
+//#define DEBUG
+
+class Item
+{
+  public:
+    Item();
+    Item(
+      byte type,
+      int x,
+      int y,
+      String content
+    );
+    byte getType() {return _type;};
+    void setType(const char * type);
+    byte getWidth() {return _width;};
+    void setWidth(byte width) {_width = width;};
+    byte getHeight() {return _height;};
+    void setHeight(byte height) {_height = height;};
+    byte getX() {return _x;};
+    void setX(byte x) {_x = x;};
+    byte getY() {return _y;};
+    void setY(byte y) {_y = y;};
+    String getContent() {return _content;};
+    void setContent(String content) {_content = content;};
+    String asString();
+  private:
+    byte    _type;
+    byte    _width;
+    byte    _height;
+    byte    _x;
+    byte    _y;
+    String  _content;
+};
+
+
+class Tile
+{
+  public:
+    Tile();
+    Tile(
+      unsigned int id,
+      unsigned long last_activity,
+      unsigned int duration,
+      byte brightness
+    );
+    unsigned int getId() {return _id;};
+    void setId(unsigned int id) {_id = id;};
+    unsigned long getLastActivity() {return _last_activity;};
+    void setLastActivity(unsigned long last_activity) {_last_activity = last_activity;};
+    unsigned int getDuration() {return _duration;};
+    void setDuration(unsigned int duration) {_duration = duration;};
+    byte getBrightness() {return _brightness;};
+    void setBrightness(byte brightness) {_brightness = brightness;};
+    void draw();
+    String asString();
+    Item items[TILES_ARRAY_SIZE];
+  private:
+    unsigned int  _id;
+    unsigned long _last_activity;
+    unsigned int  _duration;
+    byte          _brightness;
+};
+
+class Boite
+{
+  public:
+    Boite();
+    void    begin(char server[], char apikey[]);
+    boolean getTiles();
+    boolean updateTiles();
+    boolean updateTile(unsigned int id);
+    void    drawTiles();
+    void    drawTile(int id);
+  private:
+    boolean _intensityIncreases;
+    int     _currentIntensity;
+    char    _server[100];
+    char    _apikey[36+1];
+    Tile    _tiles[TILES_ARRAY_SIZE];
+    void    _updateSplashScreen();
+};
+
+#endif
