@@ -10,18 +10,19 @@ Boite	KEYWORD1	Boite
 #######################################
 # Methods and Functions (KEYWORD2)
 #######################################
-begin       KEYWORD2
-getTiles    KEYWORD2
-updateTiles KEYWORD2
-updateTile  KEYWORD2
-drawTiles   KEYWORD2
-drawTile    KEYWORD2
+begin	KEYWORD2
+addAP   KEYWORD2
+getTiles	KEYWORD2
+updateTiles	KEYWORD2
+updateTile	KEYWORD2
+drawTiles	KEYWORD2
+drawTile	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)
 #######################################
-MATRIX_CS_PIN   LITERAL1
-MATRIX_COLUMNS  LITERAL1
-MATRIX_ROWS     LITERAL1
-BITMAP          LITERAL1
-TEXT            LITERAL1
+MATRIX_CS_PIN	LITERAL1
+MATRIX_COLUMNS	LITERAL1
+MATRIX_ROWS	LITERAL1
+BITMAP	LITERAL1
+TEXT	LITERAL1
