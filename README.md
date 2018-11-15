@@ -1,7 +1,7 @@
 # laboite maker
 laboite "maker edition" is a connected clock that displays a lot of information from the Internetz. This repository contains the ESP32/Arduino firmware that can connect to [lenuage.io](https://lenuage.io/) (a web app that collect data for you and send it back to your laboite device)!
 
-![laboîte maker](https://raw.githubusercontent.com/laboiteproject/laboite-maker/master/images/labo%C3%AEte_usb.png)
+<img src="https://raw.githubusercontent.com/laboiteproject/laboite-maker/master/images/labo%C3%AEte_usb.png" width="512">
 
 This is the core library providing connectivity, parsing and debug. You will have to install the following libraries to get your laboîte device up and running:
 * [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library): core graphics library
