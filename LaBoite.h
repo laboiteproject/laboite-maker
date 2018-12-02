@@ -11,7 +11,7 @@
 #define TILES_ARRAY_SIZE 32
 #define ITEMS_ARRAY_SIZE 16
 // uncomment if you want to debug
-#define DEBUG
+//#define DEBUG
 
 class Item
 {
