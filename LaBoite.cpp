@@ -13,6 +13,8 @@
 #include <Fonts/XWindowSystemFont5x7.h>
 #include "LaBoite.h"
 
+#define PUSHBUTTON_PIN  12 // Attach pushbutton to pin 12 from GND
+#define LED_PIN         26 // Attach LED to pin 26 and GND
 #define MATRIX_CS_PIN   A5 // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI)
 #define MATRIX_COLUMNS  4
 #define MATRIX_ROWS     2
@@ -26,31 +28,25 @@ const byte splashScreenBitmap[] = {
   0x0f, 0xf0, 0x1c, 0x38, 0x08, 0x10, 0x01, 0x80, 0x03, 0xc0, 0x03, 0xc0, 0x01, 0x80
 };
 
+boolean buttonPressed;
+
 Tile::Tile()
 {
   _id = NULL;
   _last_activity = NULL;
   _duration = NULL;
   _brightness = NULL;
+  _transition = NULL;
 }
 
 
-Tile::Tile(unsigned int id, unsigned long last_activity, unsigned int duration, byte brightness)
+Tile::Tile(unsigned int id, unsigned long last_activity, unsigned int duration, byte brightness, byte transition)
 {
   _id = id;
   _last_activity = last_activity;
   _duration = duration;
   _brightness = brightness;
-}
-
-
-void Tile::draw()
-{
-  for(int i=0; i<ITEMS_ARRAY_SIZE; i++) {
-    if(items[i].getContent() != "") {
-      Serial.println(items[i].asString());
-    }
-  }
+  _transition = transition;
 }
 
 String Tile::asString()
@@ -58,7 +54,7 @@ String Tile::asString()
   String tileString = "";
   tileString += String("id: ") + _id + String("| last_activity: ") + _last_activity;
   if(_duration)
-    tileString += String("| duration: ") + _duration + String("| brightness: ") + _brightness;
+    tileString += String("| duration: ") + _duration + String("| brightness: ") + _brightness + String("| transition: ") + _transition;
 
   return tileString;
 }
@@ -100,8 +96,13 @@ String Item::asString()
 
 Boite::Boite()
 {
+  buttonPressed = false;
   _intensityIncreases = true;
   _currentIntensity = 0;
+}
+
+void interruptServiceRoutine() {
+  buttonPressed = true;
 }
 
 void Boite::begin(char server[], char apikey[])
@@ -117,6 +118,10 @@ void Boite::begin(char server[], char apikey[])
 
   for(int i=0; i<87; i++)
     _updateSplashScreen();
+
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(PUSHBUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(PUSHBUTTON_PIN), interruptServiceRoutine, FALLING);
 }
 
 void Boite::_updateSplashScreen() {
@@ -249,6 +254,7 @@ boolean Boite::updateTile(unsigned int id)
     // Extract values
     _tiles[id].setDuration(root["duration"].as<unsigned int>());
     _tiles[id].setBrightness(root["brightness"].as<byte>());
+    _tiles[id].setTransition(root["transition"].as<byte>());
 
     JsonArray& itemsFromJson = root["items"];
 
@@ -275,20 +281,61 @@ boolean Boite::updateTile(unsigned int id)
   return true;
 }
 
+boolean Boite::sendPushButtonRequest()
+{
+  // set buttonPressed back to default value:
+  buttonPressed =false;
+
+  HTTPClient http;
+
+#ifdef DEBUG
+  Serial.print(F("Push button triggered, HTTP request: "));
+  Serial.print(F("http://"));
+  Serial.print(_server);
+  Serial.print(F("/boites/"));
+  Serial.print(_apikey);
+  Serial.println(F("/pushbutton/"));
+#endif
+
+  http.begin(_server, 80, "/boites/" + String(_apikey) + "/pushbutton/");
+
+  // start connection and send HTTP request
+  if(http.GET() == HTTP_CODE_OK) {
+    for (size_t i = 0; i < 3; i++) {
+      digitalWrite(LED_PIN, HIGH);
+      delay(500);
+      digitalWrite(LED_PIN, LOW);
+      delay(500);
+    }
+  }
+  else {
+#ifdef DEBUG
+    Serial.println("HTTP request failed, disconnecting!");
+#endif
+    return false;
+  }
+  http.end();
+  return true;
+}
+
 void Boite::drawTiles()
 {
   for(int i=0;i<TILES_ARRAY_SIZE; i++) {
-    if(_tiles[i].getId())
+    if(_tiles[i].getId()) {
+      matrix.fillScreen(LOW);
+      _currentIntensity = _tiles[i].getBrightness();
+      matrix.setIntensity(_currentIntensity);
       drawTile(i);
+      _drawTileTransition(i);
+    }
   }
 }
 
 void Boite::drawTile(int id)
 {
+  if(buttonPressed)
+    sendPushButtonRequest();
   boolean isScrolling = false;
-  matrix.fillScreen(LOW);
-  _currentIntensity = _tiles[id].getBrightness();
-  matrix.setIntensity(_currentIntensity);
   for(int i=0; i<ITEMS_ARRAY_SIZE; i++) {
     Item item = _tiles[id].items[i];
     if(item.getContent() != "") {
@@ -322,10 +369,136 @@ void Boite::drawTile(int id)
         }
         matrix.drawBitmap(item.getX(), item.getY(), bitmap, item.getWidth (), item.getHeight(), HIGH);
       }
+#ifdef DEBUG
       Serial.println(item.asString());
+#endif
     }
   }
   matrix.write();
   if(!isScrolling)
     delay(_tiles[id].getDuration());
+}
+
+void Boite::drawTile(int id, int x, int y)
+{
+  for(int i=0; i<ITEMS_ARRAY_SIZE; i++) {
+    Item item = _tiles[id].items[i];
+    if(item.getContent() != "") {
+      if(item.getType() == TEXT) {
+        // item is a text
+        if(item.getContent().length() < 6) {
+          for (int c = 0; c < item.getContent().length(); c++ )
+            matrix.drawChar(item.getX()+c*5+x, item.getY()+6+y, item.getContent().charAt(c), HIGH, LOW, 1);
+        }
+      }
+      else {
+        // item is a bitmap
+        byte bitmap[64];
+        for (int i=0, c = 2; c < item.getContent().length(); i++, c+=2) {
+          String bitmapByte = item.getContent().substring(c, c+2);
+          bitmap[i] = strtol(bitmapByte.c_str(), NULL, 16);
+        }
+        matrix.drawBitmap(item.getX()+x, item.getY()+y, bitmap, item.getWidth(), item.getHeight(), HIGH);
+      }
+#ifdef DEBUG
+      Serial.println(item.asString());
+#endif
+    }
+  }
+  matrix.write();
+}
+
+void Boite::_drawTileTransition(int id)
+{
+  switch(_tiles[id].getTransition()) {
+    case 1:
+      // fadeout
+      for(int i=_currentIntensity; i>=0; i--) {
+        matrix.setIntensity(i);
+        delay(50);
+      }
+      // fadein next tile (if there is one)
+      if(_tiles[id+1].getId()) {
+        matrix.fillScreen(LOW);
+        drawTile(id+1, 0, 0);
+        for(byte i=0; i<=_tiles[id+1].getBrightness(); i++) {
+          matrix.setIntensity(i);
+          delay(50);
+        }
+      }
+      break;
+    case 2:
+      for(int x=MATRIX_COLUMNS*8; x>0; x--) {
+        matrix.fillScreen(LOW);
+        drawTile(id, x-MATRIX_COLUMNS*8, 0);
+        if(_tiles[id+1].getId()) {
+          drawTile(id+1, x, 0);
+          _fade(id+1);
+        }
+        else {
+          drawTile(0, x-1, 0);
+          _fade(0);
+        }
+        matrix.write();
+      }
+      break;
+    case 3:
+      for(int x=0; x<MATRIX_COLUMNS*8; x++) {
+        matrix.fillScreen(LOW);
+        drawTile(id, x, 0);
+        if(_tiles[id+1].getId()) {
+          drawTile(id+1, x-MATRIX_COLUMNS*8, 0);
+          _fade(id+1);
+        }
+        else {
+          drawTile(0, x-MATRIX_COLUMNS*8-1, 0);
+          _fade(0);
+        }
+        matrix.write();
+      }
+      break;
+    case 4:
+        for(int y=MATRIX_ROWS*8; y>0; y--) {
+          matrix.fillScreen(LOW);
+          drawTile(id, 0, y-MATRIX_ROWS*8);
+          if(_tiles[id+1].getId()) {
+            drawTile(id+1, 0, y);
+            _fade(id+1);
+          }
+          else {
+            drawTile(0, 0, y);
+            _fade(0);
+          }
+          matrix.write();
+        }
+        break;
+    case 5:
+      for(int y=0; y<=MATRIX_ROWS*8; y++) {
+        matrix.fillScreen(LOW);
+        drawTile(id, 0, y);
+        if(_tiles[id+1].getId()) {
+          drawTile(id+1, 0, y-MATRIX_ROWS*8);
+          _fade(id+1);
+        }
+        else {
+          drawTile(0, 0, y-MATRIX_ROWS*8);
+          _fade(0);
+        }
+        matrix.write();
+      }
+      break;
+    }
+}
+
+void Boite::_fade(int id)
+{
+  if(_currentIntensity == _tiles[id].getBrightness()) return;
+  if(_currentIntensity < _tiles[id].getBrightness()) {
+    _currentIntensity++;
+    matrix.setIntensity(_currentIntensity);
+  }
+  else {
+    _currentIntensity--;
+    matrix.setIntensity(_currentIntensity);
+  }
 }
