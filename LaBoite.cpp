@@ -15,7 +15,7 @@
 
 #define PUSHBUTTON_PIN  12 // Attach pushbutton to pin 12 from GND
 #define LED_PIN         26 // Attach LED to pin 26 and GND
-#define MATRIX_CS_PIN   A5 // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI)
+#define MATRIX_CS_PIN   4  // Attach CS to this pin, DIN to MOSI and CLK to SCK (cf http://arduino.cc/en/Reference/SPI)
 #define MATRIX_COLUMNS  4
 #define MATRIX_ROWS     2
 #define BITMAP          0
