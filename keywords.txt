@@ -11,12 +11,16 @@ Boite	KEYWORD1	Boite
 # Methods and Functions (KEYWORD2)
 #######################################
 begin	KEYWORD2
-addAP   KEYWORD2
+addAP	KEYWORD2
 getTiles	KEYWORD2
 updateTiles	KEYWORD2
 updateTile	KEYWORD2
 drawTiles	KEYWORD2
 drawTile	KEYWORD2
+getConfig	KEYWORD2
+getSSID	KEYWORD2
+getPass	KEYWORD2
+getApiKeyFromSerial	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

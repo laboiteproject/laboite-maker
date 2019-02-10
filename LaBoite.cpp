@@ -11,6 +11,7 @@
 #include <Adafruit_GFX.h>
 #include <Max72xxPanel.h>
 #include <Fonts/XWindowSystemFont5x7.h>
+#include <Preferences.h>
 #include "LaBoite.h"
 
 #define PUSHBUTTON_PIN  12 // Attach pushbutton to pin 12 from GND
@@ -21,6 +22,7 @@
 #define BITMAP          0
 #define TEXT            1
 
+Preferences preferences;
 Max72xxPanel matrix = Max72xxPanel(MATRIX_CS_PIN, MATRIX_COLUMNS, MATRIX_ROWS);
 
 const byte splashScreenBitmap[] = {
@@ -105,10 +107,9 @@ void interruptServiceRoutine() {
   buttonPressed = true;
 }
 
-void Boite::begin(char server[], char apikey[])
+void Boite::begin(String server)
 {
-  strcpy(_server, server);
-  strcpy(_apikey, apikey);
+  _server =server;
 
   // rotate the matrix
   for(int i=0; i< MATRIX_COLUMNS*MATRIX_ROWS; i++)
@@ -134,7 +135,6 @@ void Boite::_updateSplashScreen() {
     if(_currentIntensity == 16) {
       _intensityIncreases = false;
       _currentIntensity--;
-      Serial.print('.');
     }
 
   }
@@ -168,7 +168,7 @@ boolean Boite::getTiles()
   Serial.println(F("/"));
 #endif
 
-  http.begin(_server, 80, "/boites/" + String(_apikey) + "/");
+  http.begin(_server, 80, "/boites/" + _apikey + "/");
 
   // start connection and send HTTP header
   if(http.GET() == HTTP_CODE_OK) {
@@ -234,7 +234,7 @@ boolean Boite::updateTile(unsigned int id)
   Serial.println(F("/"));
 #endif
 
-  http.begin(_server, 80, "/boites/" + String(_apikey) + "/tiles/" + _tiles[id].getId() + "/");
+  http.begin(_server, 80, "/boites/" + _apikey + "/tiles/" + _tiles[id].getId() + "/");
 
   // start connection and send HTTP header
   if(http.GET() == HTTP_CODE_OK) {
@@ -297,7 +297,7 @@ boolean Boite::sendPushButtonRequest()
   Serial.println(F("/pushbutton/"));
 #endif
 
-  http.begin(_server, 80, "/boites/" + String(_apikey) + "/pushbutton/");
+  http.begin(_server, 80, "/boites/" + _apikey + "/pushbutton/");
 
   // start connection and send HTTP request
   if(http.GET() == HTTP_CODE_OK) {
@@ -335,6 +335,7 @@ void Boite::drawTile(int id)
 {
   if(buttonPressed)
     sendPushButtonRequest();
+  getApiKeyFromSerial();
   boolean isScrolling = false;
   for(int i=0; i<ITEMS_ARRAY_SIZE; i++) {
     Item item = _tiles[id].items[i];
@@ -500,5 +501,65 @@ void Boite::_fade(int id)
   else {
     _currentIntensity--;
     matrix.setIntensity(_currentIntensity);
+  }
+}
+
+void Boite::getConfig() {
+  preferences.begin("laboite", false);
+
+  _ssid = preferences.getString("ssid");
+  _pass = preferences.getString("pass");
+
+  _apikey = preferences.getString("apikey");
+
+  Serial.println(F("Here is your current laboite configuration:"));
+  Serial.println("- ssid:" + _ssid);
+  Serial.println("- pass:****************");
+  Serial.println("- apikey:" + _apikey);
+  Serial.println(F("Please send \"ssid/pass\" or \"apikey\" to change your configuration"));
+
+  while(_ssid == "" || _pass == "" || _apikey == "") {
+    String incomingSerialData = "";
+    char incomingChar;
+    while(Serial.available()) {
+      incomingChar = Serial.read();
+      incomingSerialData += incomingChar;
+    }
+    if(incomingSerialData != "") {
+      int indexOfSlash = incomingSerialData.indexOf('/');
+      if(indexOfSlash > -1) {
+        _ssid = incomingSerialData.substring(0, indexOfSlash);
+        Serial.println("ssid:" + _ssid + " (updated)");
+        _pass = incomingSerialData.substring(indexOfSlash+1);
+        Serial.println("pass:" + _pass + " (updated)");
+        preferences.putString("ssid", _ssid);
+        preferences.putString("pass", _pass);
+      }
+      else {
+        Serial.println("apikey:" + incomingSerialData + " (updated)");
+        _apikey = incomingSerialData;
+        preferences.putString("apikey", _apikey);
+      }
+    }
+  }
+  preferences.end();
+}
+
+
+void Boite::getApiKeyFromSerial() {
+  preferences.begin("laboite", false);
+  String incomingSerialData = "";
+  char incomingChar;
+  while(Serial.available()) {
+    incomingChar = Serial.read();
+    incomingSerialData += incomingChar;
+  }
+  if(incomingSerialData != "") {
+    Serial.println("apikey:" + incomingSerialData + " (updated)");
+    _apikey = incomingSerialData;
+    preferences.putString("apikey", _apikey);
+    preferences.end();
+    Serial.println(F("laboite restarting..."));
+    ESP.restart();
   }
 }

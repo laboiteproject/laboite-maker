@@ -1,5 +1,5 @@
 /*
-  laboîte ESP32 v0.1
+  laboîte ESP32 v0.2
 
   laboite "maker edition" is a connected clock that
   displays a lot of information from the Internetz!
@@ -7,7 +7,7 @@
   https://github.com/laboiteproject/lenuage/wiki/
 
   created 28 Oct 2018
-  modified 11 Nov 2018
+  modified 9 Feb 2019
   by Baptiste Gaultier
 
   released under GPLv3
@@ -21,13 +21,8 @@ WiFiMulti wifiMulti;
 
 Boite boite;
 
-// wifi network params
-char ssid[] = "";
-char pass[] = "";
-
-// lenuage params
-char hostName[] = "lenuage.io";
-char apikey[]   = "";
+// lenuage server name
+String hostName = "lenuage.io";
 
 // Generally, you should use "unsigned long" for variables that hold time
 // The value will quickly become too large for an int to store
@@ -38,11 +33,15 @@ const long interval = 10000;
 
 void setup() {
   Serial.begin(115200);
-  Serial.print(F("laboîte ESP32 v0.1 booting"));
+  Serial.println(F("laboîte ESP32 v0.2 booting..."));
 
-  boite.begin(hostName, apikey);
+  // ssid/pass and apikey should be sent using Serial Monitor
+  boite.getConfig();
 
-  wifiMulti.addAP(ssid, pass);
+  boite.begin(hostName);
+
+  // ssid/pass and apikey should be sent using Serial Monitor
+  wifiMulti.addAP(boite.getSSID().c_str(), boite.getPass().c_str());
 
   boite.getTiles();
   boite.updateTiles();

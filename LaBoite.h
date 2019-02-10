@@ -81,7 +81,7 @@ class Boite
 {
   public:
     Boite();
-    void    begin(char server[], char apikey[]);
+    void    begin(String server);
     boolean getTiles();
     boolean updateTiles();
     boolean updateTile(unsigned int id);
@@ -89,12 +89,18 @@ class Boite
     void    drawTiles();
     void    drawTile(int id);
     void    drawTile(int id, int x, int y);
+    void    getConfig();
+    String  getSSID() {return _ssid;};
+    String  getPass() {return _pass;};
+    void    getApiKeyFromSerial();
   private:
     boolean _buttonPressed;
     boolean _intensityIncreases;
     int     _currentIntensity;
-    char    _server[100];
-    char    _apikey[36+1];
+    String  _server;
+    String  _apikey;
+    String  _ssid;
+    String  _pass;
     Tile    _tiles[TILES_ARRAY_SIZE];
     void    _interruptServiceRoutine();
     void    _updateSplashScreen();
