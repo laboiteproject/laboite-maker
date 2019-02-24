@@ -1,5 +1,5 @@
 /*
-  laboîte ESP32 v0.2
+  laboîte ESP32 v0.3
 
   laboite "maker edition" is a connected clock that
   displays a lot of information from the Internetz!
@@ -33,7 +33,7 @@ const long interval = 10000;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("laboîte ESP32 v0.2 booting..."));
+  Serial.println(F("laboîte ESP32 v0.3 booting..."));
 
   // ssid/pass and apikey should be sent using Serial Monitor
   boite.getConfig();
@@ -42,9 +42,6 @@ void setup() {
 
   // ssid/pass and apikey should be sent using Serial Monitor
   wifiMulti.addAP(boite.getSSID().c_str(), boite.getPass().c_str());
-
-  boite.getTiles();
-  boite.updateTiles();
 }
 
 void loop() {

@@ -92,7 +92,6 @@ class Boite
     void    getConfig();
     String  getSSID() {return _ssid;};
     String  getPass() {return _pass;};
-    void    getApiKeyFromSerial();
   private:
     boolean _buttonPressed;
     boolean _intensityIncreases;

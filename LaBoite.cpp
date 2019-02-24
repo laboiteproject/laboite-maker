@@ -111,14 +111,29 @@ void Boite::begin(String server)
 {
   _server =server;
 
+  preferences.begin("laboite", false);
+
+  _ssid = preferences.getString("ssid");
+  _pass = preferences.getString("pass");
+
+  _apikey = preferences.getString("apikey");
+
+  Serial.println(F("Here is your current laboite configuration:"));
+  Serial.println("- ssid:" + _ssid);
+  Serial.println("- pass:****************");
+  Serial.println("- apikey:" + _apikey);
+  Serial.print(F("Please send \"ssid/pass\" or \"apikey\" to change your configuration."));
+
   // rotate the matrix
   for(int i=0; i< MATRIX_COLUMNS*MATRIX_ROWS; i++)
     matrix.setRotation(i, 1);
 
   matrix.setFont(&XWindowSystemFont5x7);
 
-  for(int i=0; i<87; i++)
+  for(int i=0; i<87; i++) {
     _updateSplashScreen();
+    getConfig();
+  }
 
   pinMode(LED_PIN, OUTPUT);
   pinMode(PUSHBUTTON_PIN, INPUT_PULLUP);
@@ -335,7 +350,7 @@ void Boite::drawTile(int id)
 {
   if(buttonPressed)
     sendPushButtonRequest();
-  getApiKeyFromSerial();
+  getConfig();
   boolean isScrolling = false;
   for(int i=0; i<ITEMS_ARRAY_SIZE; i++) {
     Item item = _tiles[id].items[i];
@@ -505,59 +520,25 @@ void Boite::_fade(int id)
 }
 
 void Boite::getConfig() {
-  preferences.begin("laboite", false);
-
-  _ssid = preferences.getString("ssid");
-  _pass = preferences.getString("pass");
-
-  _apikey = preferences.getString("apikey");
-
-  Serial.println(F("Here is your current laboite configuration:"));
-  Serial.println("- ssid:" + _ssid);
-  Serial.println("- pass:****************");
-  Serial.println("- apikey:" + _apikey);
-  Serial.println(F("Please send \"ssid/pass\" or \"apikey\" to change your configuration"));
-
-  while(_ssid == "" || _pass == "" || _apikey == "") {
-    String incomingSerialData = "";
-    char incomingChar;
-    while(Serial.available()) {
-      incomingChar = Serial.read();
-      incomingSerialData += incomingChar;
-    }
-    if(incomingSerialData != "") {
-      int indexOfSlash = incomingSerialData.indexOf('/');
-      if(indexOfSlash > -1) {
-        _ssid = incomingSerialData.substring(0, indexOfSlash);
-        Serial.println("ssid:" + _ssid + " (updated)");
-        _pass = incomingSerialData.substring(indexOfSlash+1);
-        Serial.println("pass:" + _pass + " (updated)");
-        preferences.putString("ssid", _ssid);
-        preferences.putString("pass", _pass);
-      }
-      else {
-        Serial.println("apikey:" + incomingSerialData + " (updated)");
-        _apikey = incomingSerialData;
-        preferences.putString("apikey", _apikey);
-      }
-    }
-  }
-  preferences.end();
-}
-
-
-void Boite::getApiKeyFromSerial() {
-  preferences.begin("laboite", false);
   String incomingSerialData = "";
-  char incomingChar;
-  while(Serial.available()) {
-    incomingChar = Serial.read();
-    incomingSerialData += incomingChar;
-  }
+  while(Serial.available())
+    incomingSerialData += char(Serial.read());
+
   if(incomingSerialData != "") {
-    Serial.println("apikey:" + incomingSerialData + " (updated)");
-    _apikey = incomingSerialData;
-    preferences.putString("apikey", _apikey);
+    int indexOfSlash = incomingSerialData.indexOf('/');
+    if(indexOfSlash > -1) {
+      _ssid = incomingSerialData.substring(0, indexOfSlash);
+      Serial.println("ssid:" + _ssid + " (updated)");
+      _pass = incomingSerialData.substring(indexOfSlash+1);
+      Serial.println("pass:" + _pass + " (updated)");
+      preferences.putString("ssid", _ssid);
+      preferences.putString("pass", _pass);
+    }
+    else {
+      Serial.println("apikey:" + incomingSerialData + " (updated)");
+      _apikey = incomingSerialData;
+      preferences.putString("apikey", _apikey);
+    }
     preferences.end();
     Serial.println(F("laboite restarting..."));
     ESP.restart();
