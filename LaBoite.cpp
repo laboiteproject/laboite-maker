@@ -118,11 +118,14 @@ void Boite::begin(String server)
 
   _apikey = preferences.getString("apikey");
 
-  Serial.println(F("Here is your current laboite configuration:"));
+  Serial.println(F("Hello, here is your current laboite configuration:"));
   Serial.println("- ssid:" + _ssid);
-  Serial.println("- pass:****************");
+  Serial.println(F("- pass:"));
+  for (int i = 0; i < _pass.length(); i++)
+    Serial.print('*');
+  Serial.println();
   Serial.println("- apikey:" + _apikey);
-  Serial.print(F("Please send \"ssid/pass\" or \"apikey\" to change your configuration."));
+  Serial.println(F("Please send \"ssid/pass\" or \"apikey\" to change this configuration while the wifi logo is blinking."));
 
   // rotate the matrix
   for(int i=0; i< MATRIX_COLUMNS*MATRIX_ROWS; i++)
@@ -138,6 +141,7 @@ void Boite::begin(String server)
   pinMode(LED_PIN, OUTPUT);
   pinMode(PUSHBUTTON_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(PUSHBUTTON_PIN), interruptServiceRoutine, FALLING);
+  Serial.println(F("laboite is now starting..."));
 }
 
 void Boite::_updateSplashScreen() {
@@ -162,7 +166,6 @@ void Boite::_updateSplashScreen() {
     if(_currentIntensity == -1){
       _intensityIncreases = true;
       _currentIntensity++;
-      Serial.print('.');
     }
   }
 }
