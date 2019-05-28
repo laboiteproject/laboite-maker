@@ -4,6 +4,7 @@ laboite "maker edition" is a connected clock that displays a lot of information 
 <img src="https://raw.githubusercontent.com/laboiteproject/laboite-maker/master/images/labo%C3%AEte_usb.png" width="512">
 
 This is the core library providing connectivity, parsing and debug. You will have to install the following libraries to get your laboîte device up and running:
+* [ArduinoJson Library v5](https://github.com/bblanchon/ArduinoJson/tree/5.x): json parsing library
 * [Adafruit GFX Library](https://github.com/adafruit/Adafruit-GFX-Library): core graphics library
 * [X Window System bitmap font](https://github.com/adafruit/Adafruit-GFX-Library): custom font that need to be placed in `/Fonts` directory in Adafruit GFX library
 * [Max72xxPanel Library](https://github.com/markruys/arduino-Max72xxPanel): hardware-specific library for the dot matrix driven by Max7219 controllers
