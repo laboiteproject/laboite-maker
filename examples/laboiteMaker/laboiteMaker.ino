@@ -1,5 +1,5 @@
 /*
-  laboîte ESP32 v0.3
+  laboîte ESP32 v0.4
 
   laboite "maker edition" is a connected clock that
   displays a lot of information from the Internetz!
@@ -7,17 +7,14 @@
   https://github.com/laboiteproject/lenuage/wiki/
 
   created 28 Oct 2018
-  modified 9 Feb 2019
+  modified 9 Mar 2020
   by Baptiste Gaultier
 
   released under GPLv3
 */
 
 #include <WiFi.h>
-#include <WiFiMulti.h>
 #include <LaBoite.h>
-
-WiFiMulti wifiMulti;
 
 Boite boite;
 
@@ -33,15 +30,12 @@ const long interval = 10000;
 
 void setup() {
   Serial.begin(115200);
-  Serial.println(F("laboîte ESP32 v0.3 booting..."));
 
-  // ssid/pass and apikey should be sent using Serial Monitor
-  boite.getConfig();
+  // ssid/pass and apikey should be configured using wifi
+  Serial.println(F("laboîte ESP32 v0.4 booting..."));
 
+  // start wifi, webserver, mDNS, screen... 
   boite.begin(hostName);
-
-  // ssid/pass and apikey should be sent using Serial Monitor
-  wifiMulti.addAP(boite.getSSID().c_str(), boite.getPass().c_str());
 }
 
 void loop() {
@@ -54,7 +48,7 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     // save the last time you were connected
     previousMillis = currentMillis;
-    if (wifiMulti.run() == WL_CONNECTED) {
+    if (WiFi.status() == WL_CONNECTED) {
       boite.getTiles();
       boite.updateTiles();
     }
