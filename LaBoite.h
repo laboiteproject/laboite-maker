@@ -89,7 +89,6 @@ class Boite
     void    drawTiles();
     void    drawTile(int id);
     void    drawTile(int id, int x, int y);
-    void    getConfig();
     String  getSSID() {return _ssid;};
     String  getPass() {return _pass;};
   private:
@@ -102,9 +101,11 @@ class Boite
     String  _pass;
     Tile    _tiles[TILES_ARRAY_SIZE];
     void    _interruptServiceRoutine();
-    void    _updateSplashScreen();
     void    _drawTileTransition(int id);
     void    _fade(int id);
+    String  _makePage(String title, String contents);
+    String  _urlDecode(String input);
+    void    _startWebServer();
 };
 
 #endif
