@@ -52,5 +52,7 @@ void loop() {
       boite.getTiles();
       boite.updateTiles();
     }
+    else
+      ESP.restart();
   }
 }
